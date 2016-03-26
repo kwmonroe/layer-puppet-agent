@@ -14,6 +14,11 @@ options:
     default: puppetmaster.test.test
     description: |
       Puppetmaster fqdn.
+  ca-server:
+    type: string
+    default:
+    description: |
+      Puppet ca-server fqdn.
   auto-start:
     type: boolean
     default: 'true'
