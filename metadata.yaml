@@ -1,0 +1,24 @@
+name: puppet-agent
+summary: Standalone puppet-agent subordinate charm.
+maintainer: James Beedy <jamesbeedy@gmail.com>
+description: |
+  This subordinate charm installs, configures, and manages puppet agent
+  on a set of machines to which it is related.
+  Puppet-agent can be used to ease the integration of juju into a puppet
+  environment or vice versa.
+
+  This is a standalone puppet agent charm and will provision machines
+  to which it is related with the configured puppet environment.
+tags:
+  - infra
+  - ops
+  - puppet
+  - cfgmgmt
+subordinate: true
+series:
+  - trusty
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
+

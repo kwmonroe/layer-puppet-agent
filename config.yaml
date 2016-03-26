@@ -1,0 +1,22 @@
+options:
+  puppet-version:
+    type: string
+    default: 3.8.1-1puppetlabs1
+    description: |
+      Puppet version e.g. '3.8.1-1puppetlabs1'
+  environment:
+    type: string
+    default: production
+    description: |
+      Puppet environment.
+  puppet-server:
+    type: string
+    default: puppetmaster.test.test
+    description: |
+      Puppetmaster fqdn.
+  auto-start:
+    type: boolean
+    default: 'true'
+    description: |
+      Set puppet agent auto-start, defaults to true.
+
