@@ -77,7 +77,7 @@ def render_puppet_conf(ctxt):
 
 
 @when_not('puppet-agent.installed')
-def install_puppet-agent():
+def install_puppet_agent():
 
     """ Install puppet agent
     """
