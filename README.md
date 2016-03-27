@@ -1,10 +1,12 @@
 Overview
 --------
 
-Puppet-agent provides the capibility to install, configure, and control puppet agent
-across one or more machines. Use of this charm assumes you have an existing puppetmaster
-and puppet environment defined, both of which should be configured parameters of this charm prior
-to relating it to any other services.
+This charm provides the capibility to install, configure, and manage puppet-agent
+across one or more machines. Use of this charm assumes you have an pre-existing puppetmaster
+and pre-existig puppet environment, both of which should be configured parameters 
+of this charm prior to relating it to any other services. You will need to 
+add autosign entries on your puppetmaster(s) for the nodes you intend to puppet,
+or manually sign the certs for puppeted nodes.
 
 Usage
 -----
@@ -19,11 +21,27 @@ To switch puppet environments:
     juju set puppet-agent environment='new_puppet_env'
 
 
-I like to add a generic node definition in my puppet environment to handle
-the juju named containers:
+Example node definition regex for a juju deployed machine: 
 
     node /^juju-machine-(\d{2})-lxc-(\d{2})\.mydomain\.com$/ {
       include <puppet-module>
       ...
       ...
     }
+
+    node /^ceph-osd-(\d{2})\.mydomain\.com$/ {
+      include <puppet-module>
+      ...
+      ...
+    }
+
+# Contact Information
+
+James Beedy <jamesbeedy@gmail.com>
+
+## Puppetlabs Puppet-agent
+
+  - puppetlabs.com
+
+
+[puppetlabs]: http://puppetlabs.com

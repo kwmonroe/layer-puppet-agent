@@ -1,9 +1,14 @@
 options:
   puppet-version:
-    type: string
-    default: 3.8.1-1puppetlabs1
+    type: int
+    default: 4
     description: |
-      Puppet version e.g. '3.8.1-1puppetlabs1'
+      Puppet version choices are `3` or `4`.
+  pin-puppet:
+    type: string
+    default: ''
+    description: |
+      Explicit version of puppet to install.
   environment:
     type: string
     default: production
@@ -16,7 +21,7 @@ options:
       Puppetmaster fqdn.
   ca-server:
     type: string
-    default:
+    default: ''
     description: |
       Puppet ca-server fqdn.
   auto-start:

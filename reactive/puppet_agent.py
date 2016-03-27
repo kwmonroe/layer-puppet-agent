@@ -31,24 +31,30 @@ else:
     AUTO_START = ('yes','no')
 
 
-if PUPPET_VERSION.startswith('2'):
+if PUPPET_VERSION == 4:
+    PUPPET_PKGS = ['puppet-agent']
+    if config['pin-puppet']:
+        PUPPET_PKGS = [('puppet-agent=%s' % config['pin-puppet'])]
     PUPPET_DEB = 'puppetlabs-release-pc1-trusty.deb'
-    PUPPET_PKGS = [('puppet-agent=%s' % PUPPET_VERSION)]
     PUPPET_EXE = '/opt/puppetlabs/bin/puppet'
     PUPPET_CONF_DIR = '/etc/puppetlabs/puppet'
     if config['auto-start']:
         ENABLE_PUPPET_CMD = ('%s resource service puppet ensure=running '
                              'enable=true' % PUPPET_EXE)
-else:
+elif PUPPET_VERSION == 3:
+    PUPPET_PKGS = ['puppet','puppet-common']
+    if config['pin-puppet']:
+        PUPPET_PKGS = [('puppet=%s' % PUPPET_VERSION),
+                       ('puppet-common=%s' % PUPPET_VERSION)]
     PUPPET_DEB = 'puppetlabs-release-trusty.deb'
-    PUPPET_PKGS = [('puppet=%s' % PUPPET_VERSION),
-                         ('puppet-common=%s' % PUPPET_VERSION)]
     PUPPET_EXE = '/usr/bin/puppet'
-
     PUPPET_CONF_DIR = '/etc/puppet'
     if config['auto-start']:
         ENABLE_PUPPET_CMD = ('sed -i /etc/default/puppet ' 
                              '-e s/START=%s/START=%s/' % AUTO_START)
+else:
+    print("Replace me with exception")
+
 
 PUPPET_CONF_PATH = '%s/%s' % (PUPPET_CONF_DIR, PUPPET_CONF)
 PUPPET_DEB_URL = '%s/%s' % (PUPPET_BASE_URL, PUPPET_DEB)
@@ -65,8 +71,8 @@ if config['ca-server']:
 
 def render_puppet_conf(ctxt):
 
-    """ Render puppet.conf
-    """
+    ''' Render puppet.conf
+    '''
     if os.path.exists(PUPPET_CONF_PATH):
         os.remove(PUPPET_CONF_PATH)
     render(source=PUPPET_CONF,
@@ -79,8 +85,8 @@ def render_puppet_conf(ctxt):
 @when_not('puppet-agent.installed')
 def install_puppet_agent():
 
-    """ Install puppet agent
-    """
+    ''' Install puppet agent
+    '''
     # Download and install trusty puppet deb
     hookenv.status_set('maintenance', 
                        'Installing puppet agent')
@@ -98,12 +104,17 @@ def install_puppet_agent():
 
     # Install puppet agent from apt
     hookenv.status_set('maintenance', 
-                       'Installing puppet agent version: %s' % PUPPET_VERSION)
+                       'Installing puppet-agent: v%s from apt' % PUPPET_VERSION)
     apt_install(PUPPET_PKGS)
    
     # Render puppet.conf
     render_puppet_conf(PUPPET_CONF_CTXT)
+
     # Enable auto-start
     if config['auto-start']:
         call(ENABLE_PUPPET_CMD.split(), shell=False)
+
+    # Set status and state
+    hookenv.status_set('active', 
+                       'Puppet-agent installed')
     set_state('puppet-agent.installed')
