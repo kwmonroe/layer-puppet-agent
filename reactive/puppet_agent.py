@@ -150,7 +150,7 @@ def install_puppet_agent():
     p.render_puppet_conf()
 
     # Render puppet running
-    p.render_pupppet_auto_start()
+    p.puppet_running()
 
     # Set status and state
     _puppet_active()
