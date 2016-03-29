@@ -125,44 +125,50 @@ def _puppet_active():
                            'Puppet-agent installed, but not running')
 
 
+def _fetch_install_puppet_deb(puppet):
+    '''Fetch and install the puppet deb
+    '''
+    hookenv.status_set('maintenance', 
+                       'Configuring Puppetlabs apt sources')
+    aufh = ArchiveUrlFetchHandler()
+    aufh.download(puppet.puppet_deb_url(), puppet.puppet_deb_temp())
+    dpkg_puppet_deb = 'dpkg -i %s' % puppet.puppet_deb_temp()
+    call(dpkg_puppet_deb.split(), shell=False)
+    apt_update()
+
+    # Clean up
+    rm_trusty_puppet_deb = 'rm %s' % puppet.puppet_deb_temp()
+    call(rm_trusty_puppet_deb.split(), shell=False)
+    _puppet_active()
+
+
+def _install_puppet(puppet):
+
+    '''Install puppet
+    '''
+    hookenv.status_set('maintenance', 
+                       'Installing puppet agent')
+    _fetch_install_puppet_deb(puppet)
+    apt_install(puppet.puppet_pkg_vers)
+    apt_mark(puppet.puppet_pkgs)
+    puppet.render_puppet_conf()
+    puppet.puppet_running()
+    _puppet_active()
+
+
 @when_not('puppet-agent.installed')
 def install_puppet_agent():
 
     '''Install puppet agent
     '''
-
     p = PuppetConfigs()
     # Download and install trusty puppet deb
     hookenv.status_set('maintenance', 
                        'Installing puppet agent')
     hookenv.status_set('maintenance', 
                        'Configuring Puppetlabs apt sources')
-    aufh = ArchiveUrlFetchHandler()
-    aufh.download(p.puppet_deb_url(), p.puppet_deb_temp())
-    dpkg_puppet_deb = 'dpkg -i %s' % p.puppet_deb_temp()
-    call(dpkg_puppet_deb.split(), shell=False)
-    apt_update()
+    _install_puppet(p) 
 
-    # Clean up
-    rm_trusty_puppet_deb = 'rm %s' % p.puppet_deb_temp()
-    call(rm_trusty_puppet_deb.split(), shell=False)
-
-    # Install puppet agent from apt
-    hookenv.status_set('maintenance', 
-                       'Installing puppet-agent: v%s from apt' % \
-                       config['puppet-version'])
-    
-    apt_install(p.puppet_pkg_vers)
-    apt_mark(p.puppet_pkgs)
-   
-    # Render puppet.conf
-    p.render_puppet_conf()
-
-    # Render puppet running
-    p.puppet_running()
-
-    # Set status and state
-    _puppet_active()
     set_state('puppet-agent.installed')
 
 
@@ -191,9 +197,7 @@ def puppet_version_config_changed():
     if config.previous('puppet-version') != config['puppet-version']:
         apt_unhold(p.puppet_pkgs)
         apt_purge(p.puppet_pkgs)
-    apt_install(p.puppet_pkgs)
-    p.render_puppet_conf()
-    _puppet_active()
+        _install_puppet(p)
 
 
 @when('config.changed.pin-puppet')
@@ -208,9 +212,7 @@ def puppet_version_config_changed():
     if config.previous('pin-puppet') != config['pin-puppet']:
         apt_unhold(p.puppet_pkgs)
         apt_purge(p.puppet_pkgs)
-    apt_install(p.puppet_pkgs)
-    p.render_puppet_conf()
-    _puppet_active()
+        _install_puppet(p)
 
 
 @when('config.changed.auto-start')
