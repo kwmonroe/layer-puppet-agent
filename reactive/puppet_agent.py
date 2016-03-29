@@ -38,6 +38,7 @@ class PuppetConfigs:
 
         if config['puppet-version'] == 4:
             self.puppet_pkgs = ['puppet-agent']
+            self.puppet_purge = ['puppet','puppet-common']
             if config['pin-puppet']:
                 self.puppet_pkg_vers = [('puppet-agent=%s' % config['pin-puppet'])]
             else:
@@ -53,6 +54,7 @@ class PuppetConfigs:
                  'enable=%s' % (self.puppet_exe, self.ensure_running))
         elif config['puppet-version'] == 3:
             self.puppet_pkgs = ['puppet', 'puppet-common']
+            self.puppet_purge = ['puppet-agent']
             if config['pin-puppet']:
                 self.puppet_pkg_vers = [('puppet=%s' % config['pin-puppet']),
                                         ('puppet-common=%s' % config['pin-puppet'])]
@@ -195,8 +197,8 @@ def puppet_version_config_changed():
     hookenv.status_set('maintenance',
                        'Re-installing puppet.')
     if config.previous('puppet-version') != config['puppet-version']:
-        apt_unhold(p.puppet_pkgs)
-        apt_purge(p.puppet_pkgs)
+        apt_unhold(p.puppet_purge)
+        apt_purge(p.puppet_purge)
         _install_puppet(p)
 
 
@@ -210,8 +212,8 @@ def puppet_version_config_changed():
     hookenv.status_set('maintenance',
                        'Re-installing puppet.')
     if config.previous('pin-puppet') != config['pin-puppet']:
-        apt_unhold(p.puppet_pkgs)
-        apt_purge(p.puppet_pkgs)
+        apt_unhold(p.puppet_purge)
+        apt_purge(p.puppet_purge)
         _install_puppet(p)
 
 
