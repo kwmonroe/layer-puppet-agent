@@ -13,7 +13,7 @@ from charmhelpers.core import hookenv
 from charmhelpers.fetch import (
     apt_install,
     apt_update,
-    apt_mark,
+    apt_hold,
     apt_purge,
     apt_unhold,
 )
@@ -150,7 +150,7 @@ def _install_puppet(puppet):
                        'Installing puppet agent')
     _fetch_install_puppet_deb(puppet)
     apt_install(puppet.puppet_pkg_vers)
-    apt_mark(puppet.puppet_pkgs)
+    apt_hold(puppet.puppet_pkgs)
     puppet.render_puppet_conf()
     puppet.puppet_running()
     _puppet_active()
