@@ -12,7 +12,10 @@ from charmhelpers.core.templating import render
 from charmhelpers.core import hookenv
 from charmhelpers.fetch import (
     apt_install,
-    apt_update
+    apt_update,
+    apt_mark,
+    apt_purge,
+    apt_unhold,
 )
 from charmhelpers.fetch.archiveurl import (
     ArchiveUrlFetchHandler
@@ -31,12 +34,15 @@ class PuppetConfigs:
         self.auto_start = ('yes','no')
         self.ensure_running = 'false'
         self.puppet_ssl_dir = '/var/lib/puppet/ssl/'
+        self.puppet_pkg_vers = ''
 
         if config['puppet-version'] == 4:
+            self.puppet_pkgs = ['puppet-agent']
             if config['pin-puppet']:
-                self.puppet_pkgs = [('puppet-agent=%s' % config['pin-puppet'])]
+                self.puppet_pkg_vers = [('puppet-agent=%s' % config['pin-puppet'])]
             else:
-                self.puppet_pkgs = ['puppet-agent']
+                self.puppet_pkg_vers = self.puppet_pkgs
+
             self.puppet_deb = 'puppetlabs-release-pc1-trusty.deb'
             self.puppet_exe = '/opt/puppetlabs/bin/puppet'
             self.puppet_conf_dir = '/etc/puppetlabs/puppet'
@@ -46,11 +52,12 @@ class PuppetConfigs:
                 ('%s resource service puppet ensure=running '
                  'enable=%s' % (self.puppet_exe, self.ensure_running))
         elif config['puppet-version'] == 3:
+            self.puppet_pkgs = ['puppet', 'puppet-common']
             if config['pin-puppet']:
-                self.puppet_pkgs = [('puppet=%s' % config['pin-puppet']),
-                                    ('puppet-common=%s' % config['pin-puppet'])]
+                self.puppet_pkg_vers = [('puppet=%s' % config['pin-puppet']),
+                                        ('puppet-common=%s' % config['pin-puppet'])]
             else:
-                self.puppet_pkgs = ['puppet','puppet-common']
+                self.puppet_pkg_vers = self.puppet_pkgs
             self.puppet_deb = 'puppetlabs-release-trusty.deb'
             self.puppet_exe = '/usr/bin/puppet'
             self.puppet_conf_dir = '/etc/puppet'
@@ -144,7 +151,9 @@ def install_puppet_agent():
     hookenv.status_set('maintenance', 
                        'Installing puppet-agent: v%s from apt' % \
                        config['puppet-version'])
-    apt_install(p.puppet_pkgs)
+    
+    apt_install(p.puppet_pkg_vers)
+    apt_mark(p.puppet_pkgs)
    
     # Render puppet.conf
     p.render_puppet_conf()
@@ -179,6 +188,26 @@ def puppet_version_config_changed():
     # Reinstall puppet to specified version
     hookenv.status_set('maintenance',
                        'Re-installing puppet.')
+    if config.previous('puppet-version') != config['puppet-version']:
+        apt_unhold(p.puppet_pkgs)
+        apt_purge(p.puppet_pkgs)
+    apt_install(p.puppet_pkgs)
+    p.render_puppet_conf()
+    _puppet_active()
+
+
+@when('config.changed.pin-puppet')
+def puppet_version_config_changed():
+
+    '''React to pin-puppet version changed
+    '''
+    p = PuppetConfigs()
+    # Reinstall puppet to specified version
+    hookenv.status_set('maintenance',
+                       'Re-installing puppet.')
+    if config.previous('pin-puppet') != config['pin-puppet']:
+        apt_unhold(p.puppet_pkgs)
+        apt_purge(p.puppet_pkgs)
     apt_install(p.puppet_pkgs)
     p.render_puppet_conf()
     _puppet_active()
