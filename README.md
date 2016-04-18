@@ -10,7 +10,5 @@ James Beedy <jamesbeedy@gmail.com>
 
 ## Puppetlabs Puppet-agent
 
-  - [puppetlabs](puppetlabs)
+  - [puppetlabs](https://puppetlabs.com)
 
-
-[puppetlabs]: http://puppetlabs.com
