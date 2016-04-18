@@ -10,6 +10,7 @@ from charms.reactive import when, when_not, set_state
 
 from charmhelpers.core.templating import render
 from charmhelpers.core import hookenv
+from charmhelpers.core.host import lsb_release
 from charmhelpers.fetch import (
     apt_install,
     apt_update,
@@ -31,6 +32,7 @@ class PuppetConfigs:
         self.puppet_conf = 'puppet.conf'
         self.auto_start = ('yes','no')
         self.ensure_running = 'false'
+        self.ubuntu_release = lsb_release()['DISTRIB_CODENAME']
         self.puppet_ssl_dir = '/var/lib/puppet/ssl/'
         self.puppet_pkg_vers = ''
 
@@ -38,11 +40,13 @@ class PuppetConfigs:
             self.puppet_pkgs = ['puppet-agent']
             self.puppet_purge = ['puppet','puppet-common']
             if config['pin-puppet']:
-                self.puppet_pkg_vers = [('puppet-agent=%s' % config['pin-puppet'])]
+                self.puppet_pkg_vers = \
+                    [('puppet-agent=%s' % config['pin-puppet'])]
             else:
                 self.puppet_pkg_vers = self.puppet_pkgs
 
-            self.puppet_deb = 'puppetlabs-release-pc1-trusty.deb'
+            self.puppet_deb = 'puppetlabs-release-pc1-%s.deb' % \
+                              self.ubuntu_release
             self.puppet_exe = '/opt/puppetlabs/bin/puppet'
             self.puppet_conf_dir = '/etc/puppetlabs/puppet'
             if config['auto-start']:
@@ -54,17 +58,20 @@ class PuppetConfigs:
             self.puppet_pkgs = ['puppet', 'puppet-common']
             self.puppet_purge = ['puppet-agent']
             if config['pin-puppet']:
-                self.puppet_pkg_vers = [('puppet=%s' % config['pin-puppet']),
-                                        ('puppet-common=%s' % config['pin-puppet'])]
+                self.puppet_pkg_vers = \
+                    [('puppet=%s' % config['pin-puppet']),
+                    ('puppet-common=%s' % config['pin-puppet'])]
             else:
                 self.puppet_pkg_vers = self.puppet_pkgs
-            self.puppet_deb = 'puppetlabs-release-trusty.deb'
+            self.puppet_deb = 'puppetlabs-release-%s.deb' % \
+                self.ubuntu_release
             self.puppet_exe = '/usr/bin/puppet'
             self.puppet_conf_dir = '/etc/puppet'
             if config['auto-start']:
                 self.auto_start = ('no','yes')
-            self.enable_puppet_cmd = ('sed -i /etc/default/puppet ' 
-                                      '-e s/START=%s/START=%s/' % self.auto_start)
+            self.enable_puppet_cmd = \
+                ('sed -i /etc/default/puppet '
+                 '-e s/START=%s/START=%s/' % self.auto_start)
         else:
             hookenv.log('Only puppet versions 3 and 4 suported')
 
