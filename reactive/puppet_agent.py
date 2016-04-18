@@ -24,8 +24,6 @@ from charmhelpers.fetch.archiveurl import (
 config = hookenv.config()
 
 
-
-
 class PuppetConfigs:
     def __init__(self):
         self.version = config['puppet-version']
