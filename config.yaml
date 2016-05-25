@@ -1,7 +1,7 @@
 options:
   puppet-version:
     type: int
-    default: 4
+    default: 3 
     description: |
       Puppet version choices are `3` or `4`.
   pin-puppet:
@@ -19,7 +19,7 @@ options:
       Puppet environment.
   puppet-server:
     type: string
-    default: puppetmaster.test.test
+    default: ''
     description: |
       Puppetmaster fqdn.
   ca-server:
