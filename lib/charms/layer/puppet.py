@@ -11,8 +11,6 @@ from charmhelpers.fetch import (
     apt_install,
     apt_update,
     apt_hold,
-    apt_purge,
-    apt_unhold,
 )
 from charmhelpers.fetch.archiveurl import (
     ArchiveUrlFetchHandler
@@ -119,7 +117,8 @@ class PuppetConfigs:
         call(self.enable_puppet_cmd.split(), shell=False)
 
 
-class Puppet(object):
+#class Puppet(object):
+
     def puppet_active(self):
         if config['auto-start']:
             hookenv.status_set('active', 
@@ -129,41 +128,41 @@ class Puppet(object):
                                'Puppet-agent installed, but not running')
     
     
-    def fetch_install_puppet_deb(puppet):
+    def fetch_install_puppet_deb(self, puppet):
         '''Fetch and install the puppet deb
         '''
         hookenv.status_set('maintenance', 
                            'Configuring Puppetlabs apt sources')
         aufh = ArchiveUrlFetchHandler()
-        aufh.download(puppet.puppet_deb_url(), puppet.puppet_deb_temp())
-        dpkg_puppet_deb = 'dpkg -i %s' % puppet.puppet_deb_temp()
+        aufh.download(self.puppet_deb_url(), self.puppet_deb_temp())
+        dpkg_puppet_deb = 'dpkg -i %s' % self.puppet_deb_temp()
         call(dpkg_puppet_deb.split(), shell=False)
         apt_update()
     
         # Clean up
-        rm_trusty_puppet_deb = 'rm %s' % puppet.puppet_deb_temp()
+        rm_trusty_puppet_deb = 'rm %s' % self.puppet_deb_temp()
         call(rm_trusty_puppet_deb.split(), shell=False)
-        Puppet.puppet_active()
+        self.puppet_active()
     
     
-    def install_puppet(puppet):
+    def install_puppet(self):
     
         '''Install puppet
         '''
         hookenv.status_set('maintenance', 
                            'Installing puppet agent')
-        Puppet.fetch_install_puppet_deb(puppet)
-        apt_install(puppet.puppet_pkg_vers)
-        apt_hold(puppet.puppet_pkgs)
+        self.fetch_install_puppet_deb(self)
+        apt_install(self.puppet_pkg_vers)
+        apt_hold(self.puppet_pkgs)
     
     
-    def configure_puppet(puppet):
+    def configure_puppet(self):
     
         '''Configure puppet
         '''
         hookenv.status_set('maintenance', 
                            'Configuring puppet agent')
-        puppet.render_puppet_conf()
-        puppet.puppet_running()
-        Puppet.puppet_active()
+        self.render_puppet_conf()
+        self.puppet_running()
+        self.puppet_active()
     

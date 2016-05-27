@@ -18,7 +18,7 @@ from charmhelpers.fetch.archiveurl import (
     ArchiveUrlFetchHandler
 )
 
-from charms.layer.puppet import PuppetConfigs, Puppet
+from charms.layer.puppet import PuppetConfigs
 config = hookenv.config()
 
 
@@ -33,7 +33,7 @@ def install_puppet_agent():
                        'Installing puppet agent')
     hookenv.status_set('maintenance', 
                        'Configuring Puppetlabs apt sources')
-    Puppet.install_puppet(p) 
+    PuppetConfigs.install_puppet(p) 
 
     set_state('puppet-agent.installed')
 
@@ -46,7 +46,7 @@ def configure_puppet_agent():
     the puppet config files and ensure puppet service running
     '''
     p = PuppetConfigs()
-    Puppet.configure_puppet(p)
+    PuppetConfigs.configure_puppet(p)
 
     set_state('puppet-agent.configured')
 
@@ -83,7 +83,7 @@ def puppet_server_config_changed():
         if os.path.isdir(p.puppet_ssl_dir):
             shutil.rmtree(p.puppet_ssl_dir)
     p.render_puppet_conf()
-    Puppet.puppet_active()
+    PuppetConfigs.puppet_active(p)
 
 
 @when('config.changed.puppet-version')
@@ -98,7 +98,7 @@ def puppet_version_config_changed():
     if config.previous('puppet-version') != config['puppet-version']:
         apt_unhold(p.puppet_purge)
         apt_purge(p.puppet_purge)
-        Puppet.install_puppet(p)
+        PuppetConfigs.install_puppet(p)
 
 
 @when('config.changed.pin-puppet')
@@ -113,7 +113,7 @@ def puppet_version_config_changed():
     if config.previous('pin-puppet') != config['pin-puppet']:
         apt_unhold(p.puppet_purge)
         apt_purge(p.puppet_purge)
-        Puppet.install_puppet(p)
+        PuppetConfigs.install_puppet(p)
 
 
 @when('config.changed.auto-start', 'config.set.puppet-server')
@@ -125,7 +125,7 @@ def puppet_auto_start_config_changed():
     hookenv.status_set('maintenance',
                        'Configuring auto-start')
     p.puppet_running()
-    Puppet.puppet_active()
+    PuppetConfigs.puppet_active(p)
 
 
 @when('config.changed.environment', 'config.set.puppet-server')
@@ -138,7 +138,7 @@ def puppet_environment_config_changed():
                        'Configuring new puppet env %s' % \
                        config['environment'])
     p.render_puppet_conf()
-    Puppet.puppet_active()
+    PuppetConfigs.puppet_active(p)
 
 
 @when('config.changed.ca-server', 'config.set.puppet-server')
@@ -157,4 +157,4 @@ def puppet_ca_server_config_changed():
     if os.path.isdir(p.puppet_ssl_dir):
         shutil.rmtree(p.puppet_ssl_dir)
     p.render_puppet_conf()
-    Puppet.puppet_active()
+    PuppetConfigs.puppet_active(p)
