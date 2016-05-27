@@ -3,7 +3,7 @@ Overview
 
 This is a merge of two other layers:
 
-battlemidget/juju-layer-node
+juju-solutions/layer-puppet (idea(s)shamelessly taken from battlemidget/juju-layer-node)
 
 and
 
