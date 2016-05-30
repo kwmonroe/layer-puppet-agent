@@ -29,7 +29,7 @@ options:
       Puppet ca-server fqdn.
   auto-start:
     type: boolean
-    default: 'true'
+    default: true
     description: |
       Set puppet agent auto-start, defaults to true.
 
