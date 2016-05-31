@@ -8,16 +8,9 @@ from charms.reactive import when, when_not, set_state
 
 from charmhelpers.core import hookenv
 from charmhelpers.fetch import (
-    apt_install,
-    apt_update,
-    apt_hold,
     apt_purge,
     apt_unhold,
 )
-from charmhelpers.fetch.archiveurl import (
-    ArchiveUrlFetchHandler
-)
-
 from charms.layer.puppet import PuppetConfigs
 config = hookenv.config()
 
@@ -29,11 +22,11 @@ def install_puppet_agent():
     '''
     p = PuppetConfigs()
     # Download and install trusty puppet deb
-    hookenv.status_set('maintenance', 
+    hookenv.status_set('maintenance',
                        'Installing puppet agent')
-    hookenv.status_set('maintenance', 
+    hookenv.status_set('maintenance',
                        'Configuring Puppetlabs apt sources')
-    PuppetConfigs.install_puppet(p) 
+    PuppetConfigs.install_puppet(p)
 
     set_state('puppet-agent.installed')
 
@@ -41,8 +34,7 @@ def install_puppet_agent():
 @when('config.set.puppet-server')
 @when_not('puppet-agent.configured')
 def configure_puppet_agent():
-    
-    '''Since the server is set we render 
+    '''Since the server is set we render
     the puppet config files and ensure puppet service running
     '''
     p = PuppetConfigs()
@@ -54,7 +46,6 @@ def configure_puppet_agent():
 @when('puppet-agent.installed')
 @when_not('puppet.available')
 def puppet_masterless_ready():
-    
     '''
     Set the `puppet.available` state so that other layers can
     gate puppet operations for masterless puppet state (unconfigured)
@@ -84,21 +75,6 @@ def puppet_server_config_changed():
             shutil.rmtree(p.puppet_ssl_dir)
     p.render_puppet_conf()
     PuppetConfigs.puppet_active(p)
-
-
-@when('config.changed.puppet-version')
-def puppet_version_config_changed():
-
-    '''React to puppet version changed
-    '''
-    p = PuppetConfigs()
-    # Reinstall puppet to specified version
-    hookenv.status_set('maintenance',
-                       'Re-installing puppet.')
-    if config.previous('puppet-version') != config['puppet-version']:
-        apt_unhold(p.puppet_purge)
-        apt_purge(p.puppet_purge)
-        PuppetConfigs.install_puppet(p)
 
 
 @when('config.changed.pin-puppet')
@@ -135,8 +111,7 @@ def puppet_environment_config_changed():
     '''
     p = PuppetConfigs()
     hookenv.status_set('maintenance',
-                       'Configuring new puppet env %s' % \
-                       config['environment'])
+                       'Configuring new puppet env %s' % config['environment'])
     p.render_puppet_conf()
     PuppetConfigs.puppet_active(p)
 
@@ -147,12 +122,10 @@ def puppet_ca_server_config_changed():
     '''React to config-changed
     '''
     p = PuppetConfigs()
-    
-    # Remove ssl dir if ca-server has changed to avoid 
+    # Remove ssl dir if ca-server has changed to avoid
     # cert conflicts with pre-existing, now stale client
     # cert and new puppetmaster cert
-
-    hookenv.status_set('maintenance', 
+    hookenv.status_set('maintenance',
                        'Reconfiguring puppet-agent for new ca-server.')
     if os.path.isdir(p.puppet_ssl_dir):
         shutil.rmtree(p.puppet_ssl_dir)
