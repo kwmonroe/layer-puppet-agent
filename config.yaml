@@ -32,4 +32,14 @@ options:
     default: true
     description: |
       Set puppet agent auto-start, defaults to true.
-
+  puppet-gpg-id:
+    type: string
+    default: 4BD6EC30
+    description: |
+      Puppetlabs gpg-key id.
+  package_status:
+    default: "hold"
+    type: string
+    description: >
+        The status of service-affecting packages will be set to this
+        value in the dpkg database. Valid values are "install" and "hold".

@@ -7,14 +7,9 @@ from subprocess import call
 from charmhelpers.core.templating import render
 from charmhelpers.core import hookenv
 from charmhelpers.core.host import lsb_release
-from charmhelpers.fetch import (
-    apt_install,
-    apt_update,
-    apt_hold,
-)
-from charmhelpers.fetch.archiveurl import (
-    ArchiveUrlFetchHandler
-)
+
+import charms.apt
+
 
 config = hookenv.config()
 
@@ -22,13 +17,14 @@ config = hookenv.config()
 class PuppetConfigs:
     def __init__(self):
         self.version = config['puppet-version']
-        self.puppet_base_url = 'https://apt.puppetlabs.com'
+        self.puppet_base_url = 'http://apt.puppetlabs.com'
         self.puppet_conf = 'puppet.conf'
         self.auto_start = ('yes', 'no')
         self.ensure_running = 'false'
         self.ubuntu_release = lsb_release()['DISTRIB_CODENAME']
         self.puppet_ssl_dir = '/var/lib/puppet/ssl/'
         self.puppet_pkg_vers = ''
+        self.puppet_gpg_id = config['puppet-gpg-id']
 
         if config['puppet-version'] == 4:
             self.puppet_pkgs = ['puppet-agent']
@@ -39,10 +35,10 @@ class PuppetConfigs:
             else:
                 self.puppet_pkg_vers = self.puppet_pkgs
 
-            self.puppet_deb = 'puppetlabs-release-pc1-%s.deb' % \
-                              self.ubuntu_release
             self.puppet_exe = '/opt/puppetlabs/bin/puppet'
             self.puppet_conf_dir = '/etc/puppetlabs/puppet'
+            self.puppet_apt_src = 'deb %s %s PC1' % \
+                                  (self.puppet_base_url, self.ubuntu_release)
             if config['auto-start']:
                 self.ensure_running = 'true'
             self.enable_puppet_cmd = \
@@ -61,13 +57,16 @@ class PuppetConfigs:
                 self.ubuntu_release
             self.puppet_exe = '/usr/bin/puppet'
             self.puppet_conf_dir = '/etc/puppet'
+            self.puppet_apt_src = 'deb %s %s main dependencies' % \
+                                  (self.puppet_base_url, self.ubuntu_release)
             if config['auto-start']:
                 self.auto_start = ('no', 'yes')
             self.enable_puppet_cmd = \
                 ('sed -i /etc/default/puppet '
                  '-e s/START=%s/START=%s/' % self.auto_start)
         else:
-            hookenv.log('Only puppet versions 3 and 4 suported')
+            hookenv.status_set('blocked',
+                               'Only puppet versions 3 and 4 suported')
 
         self.puppet_conf_ctxt = {
             'environment': config['environment'],
@@ -75,6 +74,13 @@ class PuppetConfigs:
         }
         if config['ca-server']:
             self.puppet_conf_ctxt['ca_server'] = config['ca-server']
+
+    def puppet_purge(self):
+        ''' Purge appropriate puppet pkgs
+        '''
+        hookenv.status_set('maintenance',
+                           'Purging puppet pkgs')
+        charms.apt.purge(self.puppet_pkgs)
 
     def render_puppet_conf(self):
         ''' Render puppet.conf
@@ -119,30 +125,25 @@ class PuppetConfigs:
             hookenv.status_set('active',
                                'Puppet-agent installed, but not running')
 
-    def fetch_install_puppet_deb(self, puppet):
-        '''Fetch and install the puppet deb
+    def install_puppet_apt_src(self):
+        '''Fetch and install the puppet gpg key and puppet deb source
         '''
         hookenv.status_set('maintenance',
                            'Configuring Puppetlabs apt sources')
-        aufh = ArchiveUrlFetchHandler()
-        aufh.download(self.puppet_deb_url(), self.puppet_deb_temp())
-        dpkg_puppet_deb = 'dpkg -i %s' % self.puppet_deb_temp()
-        call(dpkg_puppet_deb.split(), shell=False)
-        apt_update()
-
-        # Clean up
-        rm_trusty_puppet_deb = 'rm %s' % self.puppet_deb_temp()
-        call(rm_trusty_puppet_deb.split(), shell=False)
-        self.puppet_active()
+        # Add puppet gpg id and apt source
+        charms.apt.add_source(self.puppet_apt_src, self.puppet_gpg_id)
+        # Apt update to pick up the sources
+        charms.apt.update()
+        # Queue the installation of appropriate puppet pkgs
+        charms.apt.queue_install(self.puppet_pkg_vers)
 
     def install_puppet(self):
         '''Install puppet
         '''
         hookenv.status_set('maintenance',
                            'Installing puppet agent')
-        self.fetch_install_puppet_deb(self)
-        apt_install(self.puppet_pkg_vers)
-        apt_hold(self.puppet_pkgs)
+        self.install_puppet_apt_src()
+        charms.apt.install_queued()
 
     def configure_puppet(self):
         '''Configure puppet

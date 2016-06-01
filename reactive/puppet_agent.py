@@ -7,10 +7,7 @@ import shutil
 from charms.reactive import when, when_not, set_state
 
 from charmhelpers.core import hookenv
-from charmhelpers.fetch import (
-    apt_purge,
-    apt_unhold,
-)
+
 from charms.layer.puppet import PuppetConfigs
 config = hookenv.config()
 
@@ -87,8 +84,7 @@ def puppet_version_config_changed():
     hookenv.status_set('maintenance',
                        'Re-installing puppet.')
     if config.previous('pin-puppet') != config['pin-puppet']:
-        apt_unhold(p.puppet_purge)
-        apt_purge(p.puppet_purge)
+        p.puppet_purge()
         PuppetConfigs.install_puppet(p)
 
 
