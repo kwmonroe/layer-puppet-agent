@@ -99,18 +99,6 @@ class PuppetConfigs:
         puppet_conf_path = '%s/%s' % (self.puppet_conf_dir, self.puppet_conf)
         return puppet_conf_path
 
-    def puppet_deb_url(self):
-        '''Return fully qualified puppet deb url
-        '''
-        puppet_deb_url = '%s/%s' % (self.puppet_base_url, self.puppet_deb)
-        return puppet_deb_url
-
-    def puppet_deb_temp(self):
-        '''Return fully qualified path to downloaded deb
-        '''
-        puppet_deb_temp = os.path.join('/tmp', self.puppet_deb)
-        return puppet_deb_temp
-
     def puppet_running(self):
 
         '''Enable or disable puppet auto-start
@@ -131,7 +119,7 @@ class PuppetConfigs:
         hookenv.status_set('maintenance',
                            'Configuring Puppetlabs apt sources')
         # Add puppet gpg id and apt source
-        charms.apt.add_source(self.puppet_apt_src, self.puppet_gpg_id)
+        charms.apt.add_source(self.puppet_apt_src, key=self.puppet_gpg_id)
         # Apt update to pick up the sources
         charms.apt.update()
         # Queue the installation of appropriate puppet pkgs
