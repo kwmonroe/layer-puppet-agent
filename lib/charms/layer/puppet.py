@@ -28,7 +28,7 @@ class PuppetConfigs:
 
         if config['puppet-version'] == 4:
             self.puppet_pkgs = ['puppet-agent']
-            self.puppet_purge = ['puppet', 'puppet-common']
+            self.puppet_purge_pkgs = ['puppet', 'puppet-common']
             if config['pin-puppet']:
                 self.puppet_pkg_vers = \
                     [('puppet-agent=%s' % config['pin-puppet'])]
@@ -46,7 +46,7 @@ class PuppetConfigs:
                  'enable=%s' % (self.puppet_exe, self.ensure_running))
         elif config['puppet-version'] == 3:
             self.puppet_pkgs = ['puppet', 'puppet-common']
-            self.puppet_purge = ['puppet-agent']
+            self.puppet_purge_pkgs = ['puppet-agent']
             if config['pin-puppet']:
                 self.puppet_pkg_vers = \
                     [('puppet=%s' % config['pin-puppet']),
@@ -80,7 +80,7 @@ class PuppetConfigs:
         '''
         hookenv.status_set('maintenance',
                            'Purging puppet pkgs')
-        charms.apt.purge(self.puppet_pkgs)
+        charms.apt.purge(self.puppet_purge_pkgs)
 
     def render_puppet_conf(self):
         ''' Render puppet.conf
