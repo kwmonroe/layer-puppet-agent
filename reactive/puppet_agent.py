@@ -4,7 +4,7 @@
 import os
 import shutil
 
-from charms.reactive import when, when_not, set_state
+from charms.reactive import when, when_not, set_state, when_any
 
 from charmhelpers.core import hookenv
 
@@ -83,12 +83,14 @@ def puppet_version_config_changed():
     # Reinstall puppet to specified version
     hookenv.status_set('maintenance',
                        'Re-installing puppet.')
-    if config.previous('pin-puppet') != config['pin-puppet']:
+    if config.previous('pin-puppet') != config['pin-puppet'] and \
+       (len(config['pin-puppet']) > 1):
         p.puppet_purge()
         PuppetConfigs.install_puppet(p)
 
 
-@when('config.changed.auto-start', 'config.set.puppet-server')
+@when('config.set.puppet-server')
+@when_any('config.changed.auto-start', 'config.changed.puppet-server')
 def puppet_auto_start_config_changed():
 
     '''React to auto-start changed

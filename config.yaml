@@ -8,7 +8,6 @@ options:
     type: string
     default: ''
     description: |
-      Explicit version of puppet to install.
       This will override the system default for the
       general version of puppet specified by the 
       puppet-version config parameter.
