@@ -4,7 +4,11 @@
 import os
 import shutil
 
-from charms.reactive import when, when_not, set_state, when_any
+from charms.reactive import when
+from charms.reactive import when_not
+from charms.reactive import set_state
+from charms.reactive import when_any
+from charms.reactive import when_none
 
 from charmhelpers.core import hookenv
 
@@ -37,6 +41,11 @@ def masterless_puppet():
                        'Masterless puppet configued')
     set_state('puppet.available')
 
+@when_none('apt.installed.puppet-common', 'apt.installed.puppet-agent')
+@when('puppet.available')
+def masterless_avail():
+    hookenv.status_set('active',
+                       'Masterless puppet configued')
 
 @when('config.set.puppet-server')
 @when_not('puppet-agent.configured', 'apt.queued_installs')
@@ -75,7 +84,7 @@ def puppet_server_config_changed():
     p.puppet_active()
 
 
-@when('config.changed.pin-puppet')
+@when('config.set.pin-puppet', 'config.changed.pin-puppet')
 def puppet_version_config_changed():
 
     '''React to pin-puppet version changed
