@@ -12,6 +12,7 @@ from charms.layer.puppet import PuppetConfigs
 config = hookenv.config()
 
 
+@when('config.set.puppet-server')
 @when_not('puppet-agent.installed')
 def install_puppet_agent():
 
@@ -21,33 +22,33 @@ def install_puppet_agent():
     # Download and install trusty puppet deb
     hookenv.status_set('maintenance',
                        'Installing puppet agent')
-    hookenv.status_set('maintenance',
-                       'Configuring Puppetlabs apt sources')
-    PuppetConfigs.install_puppet(p)
-
+    p.install_puppet()
+    p.puppet_active()
     set_state('puppet-agent.installed')
 
 
+@when_not('config.set.puppet-server', 'puppet.available')
+def masterless_puppet():
+    '''
+    Set the `puppet.available` state so that other layers can
+    gate puppet operations for masterless puppet state (unconfigured)
+    '''
+    hookenv.status_set('active',
+                       'Masterless puppet configued')
+    set_state('puppet.available')
+
+
 @when('config.set.puppet-server')
-@when_not('puppet-agent.configured')
+@when_not('puppet-agent.configured', 'apt.queued_installs')
 def configure_puppet_agent():
     '''Since the server is set we render
     the puppet config files and ensure puppet service running
     '''
     p = PuppetConfigs()
-    PuppetConfigs.configure_puppet(p)
+    p.configure_puppet()
 
     set_state('puppet-agent.configured')
-
-
-@when('puppet-agent.installed')
-@when_not('puppet.available')
-def puppet_masterless_ready():
-    '''
-    Set the `puppet.available` state so that other layers can
-    gate puppet operations for masterless puppet state (unconfigured)
-    '''
-    set_state('puppet.available')
+    p.puppet_active()
 
 
 @when('puppet-agent.installed', 'puppet-agent.configured')
@@ -71,7 +72,7 @@ def puppet_server_config_changed():
         if os.path.isdir(p.puppet_ssl_dir):
             shutil.rmtree(p.puppet_ssl_dir)
     p.render_puppet_conf()
-    PuppetConfigs.puppet_active(p)
+    p.puppet_active()
 
 
 @when('config.changed.pin-puppet')
@@ -86,7 +87,8 @@ def puppet_version_config_changed():
     if config.previous('pin-puppet') != config['pin-puppet'] and \
        (len(config['pin-puppet']) > 1):
         p.puppet_purge()
-        PuppetConfigs.install_puppet(p)
+        p.install_puppet()
+    p.puppet_active()
 
 
 @when('config.set.puppet-server')
@@ -99,7 +101,7 @@ def puppet_auto_start_config_changed():
     hookenv.status_set('maintenance',
                        'Configuring auto-start')
     p.puppet_running()
-    PuppetConfigs.puppet_active(p)
+    p.puppet_active()
 
 
 @when('config.changed.environment', 'config.set.puppet-server')
@@ -111,7 +113,7 @@ def puppet_environment_config_changed():
     hookenv.status_set('maintenance',
                        'Configuring new puppet env %s' % config['environment'])
     p.render_puppet_conf()
-    PuppetConfigs.puppet_active(p)
+    p.puppet_active()
 
 
 @when('config.changed.ca-server', 'config.set.puppet-server')
@@ -128,4 +130,4 @@ def puppet_ca_server_config_changed():
     if os.path.isdir(p.puppet_ssl_dir):
         shutil.rmtree(p.puppet_ssl_dir)
     p.render_puppet_conf()
-    PuppetConfigs.puppet_active(p)
+    p.puppet_active()

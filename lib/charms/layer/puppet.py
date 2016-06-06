@@ -24,7 +24,7 @@ class PuppetConfigs:
         self.ubuntu_release = lsb_release()['DISTRIB_CODENAME']
         self.puppet_ssl_dir = '/var/lib/puppet/ssl/'
         self.puppet_pkg_vers = ''
-        self.puppet_gpg_id = config['puppet-gpg-id']
+        self.puppet_gpg_key = config['puppet-gpg-key']
 
         if config['puppet-version'] == 4:
             self.puppet_pkgs = ['puppet-agent']
@@ -53,8 +53,6 @@ class PuppetConfigs:
                      ('puppet-common=%s' % config['pin-puppet'])]
             else:
                 self.puppet_pkg_vers = self.puppet_pkgs
-            self.puppet_deb = 'puppetlabs-release-%s.deb' % \
-                self.ubuntu_release
             self.puppet_exe = '/usr/bin/puppet'
             self.puppet_conf_dir = '/etc/puppet'
             self.puppet_apt_src = 'deb %s %s main dependencies' % \
@@ -80,7 +78,8 @@ class PuppetConfigs:
         '''
         hookenv.status_set('maintenance',
                            'Purging puppet pkgs')
-        charms.apt.purge(self.puppet_purge_pkgs)
+        if self.puppet_purge_pkgs in charms.apt.installed():
+            charms.apt.purge(self.puppet_purge_pkgs)
 
     def render_puppet_conf(self):
         ''' Render puppet.conf
@@ -119,7 +118,7 @@ class PuppetConfigs:
         hookenv.status_set('maintenance',
                            'Configuring Puppetlabs apt sources')
         # Add puppet gpg id and apt source
-        charms.apt.add_source(self.puppet_apt_src, key=self.puppet_gpg_id)
+        charms.apt.add_source(self.puppet_apt_src, key=self.puppet_gpg_key)
         # Apt update to pick up the sources
         charms.apt.update()
         # Queue the installation of appropriate puppet pkgs
@@ -140,4 +139,3 @@ class PuppetConfigs:
                            'Configuring puppet agent')
         self.render_puppet_conf()
         self.puppet_running()
-        self.puppet_active()
