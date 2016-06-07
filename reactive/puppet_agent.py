@@ -13,6 +13,8 @@ from charms.reactive import when_none
 from charmhelpers.core import hookenv
 
 from charms.layer.puppet import PuppetConfigs
+import charms.apt
+
 config = hookenv.config()
 
 
@@ -32,6 +34,7 @@ def install_puppet_agent():
 
 
 @when_not('config.set.puppet-server', 'puppet.available')
+@when_not('apt.installed.puppet-common')
 def masterless_puppet():
     '''
     Set the `puppet.available` state so that other layers can
@@ -39,13 +42,17 @@ def masterless_puppet():
     '''
     hookenv.status_set('active',
                        'Masterless puppet configued')
+    charms.apt.queue_install(['puppet-common'])
+    charms.apt.install_queued()
     set_state('puppet.available')
 
-@when_none('apt.installed.puppet-common', 'apt.installed.puppet-agent')
-@when('puppet.available')
+
+@when_none('puppet-agent.installed', 'config.set.puppet-server')
+@when('puppet.available', 'apt.installed.puppet-common')
 def masterless_avail():
     hookenv.status_set('active',
                        'Masterless puppet configued')
+
 
 @when('config.set.puppet-server')
 @when_not('puppet-agent.configured', 'apt.queued_installs')
