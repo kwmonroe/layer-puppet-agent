@@ -1,2 +1,11 @@
 includes: ['layer:basic', 'layer:apt']  # if you use any interfaces, add them here
 repo: https://github.com/jamesbeedy/layer-puppet-agent.git
+defines:
+  silent:
+    description: |
+      When true, suppress select puppet-agent status messages. This is useful
+      when puppet-agent is an intermediate layer and you do not want status
+      messages from this layer to overwrite messages from layers above.
+      States are not affected.
+    type: boolean
+    default: false
